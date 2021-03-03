@@ -391,22 +391,21 @@ Symbol Table
  18 _sch_dispatch                                                  0000A5 GR
     _sch_index                                                  =  000210 G
  18 _sch_init                                                      0001A2 GR
- 18 _sch_mutex_lock                                                000475 GR
- 18 _sch_mutex_release                                             000503 GR
-  7 _sch_mutex_release_i_65536_49                                  000000 R
-  7 _sch_mutex_release_sloc0_1_0                                   000001 R
- 18 _sch_mutex_start                                               000437 GR
+ 18 _sch_mutex_lock                                                00048F GR
+  6 _sch_mutex_lock_mut_65536_40                                   000000 R
+ 18 _sch_mutex_release                                             000535 GR
+ 18 _sch_mutex_start                                               000451 GR
   7 _sch_mutex_start_PARM_2                                        000000 GR
- 18 _sch_mutex_trylock                                             0004D8 GR
- 18 _sch_next                                                      00036B GR
+ 18 _sch_mutex_trylock                                             00050A GR
+ 18 _sch_next                                                      000385 GR
     _sch_num_tasks                                              =  000211 G
  18 _sch_schedule                                                  000000 GR
- 18 _sch_semaphore_get                                             000612 GR
- 18 _sch_semaphore_put                                             000675 GR
-  7 _sch_semaphore_put_i_65536_69                                  000000 R
- 18 _sch_semaphore_start                                           0005A8 GR
-  7 _sch_semaphore_start_PARM_2                                    000000 GR
- 18 _sch_semaphore_tryget                                          0005E7 GR
+ 18 _sch_semaphore_get                                             000647 GR
+  6 _sch_semaphore_get_sem_65536_66                                000004 R
+ 18 _sch_semaphore_put                                             0006C2 GR
+ 18 _sch_semaphore_start                                           0005DD GR
+  6 _sch_semaphore_start_PARM_2                                    000003 GR
+ 18 _sch_semaphore_tryget                                          00061C GR
  18 _sch_start                                                     0002EE GR
     _sch_tasks                                                  =  000000 G
     _sch_time                                                   =  000208 G
@@ -418,12 +417,12 @@ Symbol Table
     a.4                                                         =  0000E4 L
     a.5                                                         =  0000E5 L
     a.6                                                         =  0000E6 L
+    a.7                                                         =  0000E7 L
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (Intel 8051), page 8.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    a.7                                                         =  0000E7 L
     ac                                                          =  0000D6 L
     acc                                                         =  0000E0 L
     acc.0                                                       =  0000E0 L
@@ -478,12 +477,12 @@ Symbol Table
     ie                                                          =  0000A8 L
     ie.0                                                        =  0000A8 L
     ie.1                                                        =  0000A9 L
+    ie.2                                                        =  0000AA L
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (Intel 8051), page 9.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    ie.2                                                        =  0000AA L
     ie.3                                                        =  0000AB L
     ie.4                                                        =  0000AC L
     ie.5                                                        =  0000AD L
@@ -538,12 +537,12 @@ Symbol Table
     p3.4                                                        =  0000B4 L
     p3.5                                                        =  0000B5 L
     p3.6                                                        =  0000B6 L
+    p3.7                                                        =  0000B7 L
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (Intel 8051), page 10.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    p3.7                                                        =  0000B7 L
     pcon                                                        =  000087 L
     ps                                                          =  0000BC L
     psw                                                         =  0000D0 L
@@ -598,12 +597,12 @@ Symbol Table
     tcon.0                                                      =  000088 L
     tcon.1                                                      =  000089 L
     tcon.2                                                      =  00008A L
+    tcon.3                                                      =  00008B L
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (Intel 8051), page 11.
 Hexadecimal [24-Bits]
 
 Symbol Table
 
-    tcon.3                                                      =  00008B L
     tcon.4                                                      =  00008C L
     tcon.5                                                      =  00008D L
     tcon.6                                                      =  00008E L
@@ -624,6 +623,7 @@ Symbol Table
     tr2                                                         =  0000CA L
     txd                                                         =  0000B1 L
 
+
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (Intel 8051), page 12.
 Hexadecimal [24-Bits]
 
@@ -635,8 +635,8 @@ Area Table
    3 RSEG1                                      size      0   flags    8
    4 REG_BANK_0                                 size      8   flags    4
    5 BIT_BANK                                   size      1   flags    4
-   6 DSEG                                       size      0   flags    0
-   7 OSEG                                       size      4   flags    4
+   6 DSEG                                       size      7   flags    0
+   7 OSEG                                       size      1   flags    4
    8 ISEG                                       size      0   flags    0
    9 IABS                                       size      0   flags    8
    A BSEG                                       size      0   flags   80
@@ -653,7 +653,7 @@ Area Table
   15 GSINIT5                                    size      0   flags   20
   16 GSINIT                                     size      0   flags   20
   17 GSFINAL                                    size      0   flags   20
-  18 CSEG                                       size    73B   flags   20
+  18 CSEG                                       size    782   flags   20
   19 CONST                                      size      0   flags   20
   1A XINIT                                      size      0   flags   20
   1B CABS                                       size      0   flags   28

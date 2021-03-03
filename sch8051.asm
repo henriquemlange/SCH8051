@@ -8,7 +8,6 @@
 ;--------------------------------------------------------
 ; Public variables in this module
 ;--------------------------------------------------------
-	.globl _sch_semaphore_start_PARM_2
 	.globl _sch_mutex_start_PARM_2
 	.globl _SPR0
 	.globl _SPR1
@@ -184,6 +183,7 @@
 	.globl _sch_index
 	.globl _sch_time
 	.globl _sch_tasks
+	.globl _sch_semaphore_start_PARM_2
 	.globl _sch_schedule
 	.globl _sch_dispatch
 	.globl _sch_init
@@ -401,26 +401,20 @@ bits:
 ; internal ram data
 ;--------------------------------------------------------
 	.area DSEG    (DATA)
+_sch_mutex_lock_mut_65536_40:
+	.ds 3
+_sch_semaphore_start_PARM_2:
+	.ds 1
+_sch_semaphore_get_sem_65536_66:
+	.ds 3
 ;--------------------------------------------------------
 ; overlayable items in internal ram 
 ;--------------------------------------------------------
 	.area	OSEG    (OVR,DATA)
 	.area	OSEG    (OVR,DATA)
 	.area	OSEG    (OVR,DATA)
+	.area	OSEG    (OVR,DATA)
 _sch_mutex_start_PARM_2:
-	.ds 1
-	.area	OSEG    (OVR,DATA)
-	.area	OSEG    (OVR,DATA)
-_sch_mutex_release_i_65536_49:
-	.ds 1
-_sch_mutex_release_sloc0_1_0:
-	.ds 3
-	.area	OSEG    (OVR,DATA)
-_sch_semaphore_start_PARM_2:
-	.ds 1
-	.area	OSEG    (OVR,DATA)
-	.area	OSEG    (OVR,DATA)
-_sch_semaphore_put_i_65536_69:
 	.ds 1
 ;--------------------------------------------------------
 ; indirectly addressable internal ram data
@@ -702,10 +696,10 @@ _sch_dispatch:
 	addc	a,r5
 	mov	dph,a
 	mov	a,_SP
-	add	a,#0x92
+	add	a,#0xbb
 	mov	r5,a
 	movx	@dptr,a
-	mov	r1,#0x6e
+	mov	r1,#0x45
 00101$:
 	mov	ar5,r1
 	clr	c
@@ -751,9 +745,9 @@ _sch_dispatch:
 	mov	dph,a
 	movx	a,@dptr
 	mov	r5,a
-	add	a,#0x6e
+	add	a,#0x45
 	mov	_SP,a
-	mov	r1,#0x6e
+	mov	r1,#0x45
 00104$:
 	mov	ar5,r1
 	clr	c
@@ -1099,9 +1093,28 @@ _sch_start:
 ;	sch8051.c:189: TR2 = 1;  
 ;	assignBit
 	setb	_TR2
-;	sch8051.c:192: sch_schedule();
-	lcall	_sch_schedule
-;	sch8051.c:193: TO_STACK
+;	sch8051.c:192: sch_index = 0; 
+	mov	dptr,#_sch_index
+	clr	a
+	movx	@dptr,a
+;	sch8051.c:193: sch_tasks[sch_index].state = READY; 
+	movx	a,@dptr
+	mov	b,#0x34
+	mul	ab
+	add	a,#_sch_tasks
+	mov	r6,a
+	mov	a,#(_sch_tasks >> 8)
+	addc	a,b
+	mov	r7,a
+	mov	a,#0x33
+	add	a,r6
+	mov	dpl,a
+	clr	a
+	addc	a,r7
+	mov	dph,a
+	clr	a
+	movx	@dptr,a
+;	sch8051.c:194: TO_STACK
 	mov	dptr,#_sch_index
 	movx	a,@dptr
 	mov	b,#0x34
@@ -1127,9 +1140,9 @@ _sch_start:
 	mov	dph,a
 	movx	a,@dptr
 	mov	r5,a
-	add	a,#0x6e
+	add	a,#0x45
 	mov	_SP,a
-	mov	r1,#0x6e
+	mov	r1,#0x45
 00101$:
 	mov	ar5,r1
 	clr	c
@@ -1147,7 +1160,7 @@ _sch_start:
 	inc	r1
 	sjmp	00101$
 00103$:
-;	sch8051.c:194: POP_BANK  
+;	sch8051.c:195: POP_BANK  
 	pop psw 
 	pop 0 
 	pop 1 
@@ -1162,10 +1175,10 @@ _sch_start:
 	pop b 
 	pop acc 
 	pop bits 
-;	sch8051.c:195: EA = 1;
+;	sch8051.c:196: EA = 1;
 ;	assignBit
 	setb	_EA
-;	sch8051.c:196: }
+;	sch8051.c:197: }
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'sch_next'
@@ -1175,15 +1188,15 @@ _sch_start:
 ;ram                       Allocated to registers r1 
 ;xram                      Allocated to registers r6 r7 
 ;------------------------------------------------------------
-;	sch8051.c:199: void sch_next(){
+;	sch8051.c:200: void sch_next(){
 ;	-----------------------------------------
 ;	 function sch_next
 ;	-----------------------------------------
 _sch_next:
-;	sch8051.c:200: EA = 0; 
+;	sch8051.c:201: EA = 0; 
 ;	assignBit
 	clr	_EA
-;	sch8051.c:201: PUSH_BANK
+;	sch8051.c:202: PUSH_BANK
 	push bits 
 	push acc 
 	push b 
@@ -1198,7 +1211,7 @@ _sch_next:
 	push 1 
 	push 0 
 	push psw 
-;	sch8051.c:202: TO_XRAM
+;	sch8051.c:203: TO_XRAM
 	mov	dptr,#_sch_index
 	movx	a,@dptr
 	mov	b,#0x34
@@ -1223,10 +1236,10 @@ _sch_next:
 	addc	a,r5
 	mov	dph,a
 	mov	a,_SP
-	add	a,#0x92
+	add	a,#0xbb
 	mov	r5,a
 	movx	@dptr,a
-	mov	r1,#0x6e
+	mov	r1,#0x45
 00101$:
 	mov	ar5,r1
 	clr	c
@@ -1244,9 +1257,9 @@ _sch_next:
 	mov	r7,dph
 	sjmp	00101$
 00103$:
-;	sch8051.c:203: sch_schedule();
+;	sch8051.c:204: sch_schedule();
 	lcall	_sch_schedule
-;	sch8051.c:204: TO_STACK
+;	sch8051.c:205: TO_STACK
 	mov	dptr,#_sch_index
 	movx	a,@dptr
 	mov	b,#0x34
@@ -1272,9 +1285,9 @@ _sch_next:
 	mov	dph,a
 	movx	a,@dptr
 	mov	r5,a
-	add	a,#0x6e
+	add	a,#0x45
 	mov	_SP,a
-	mov	r1,#0x6e
+	mov	r1,#0x45
 00104$:
 	mov	ar5,r1
 	clr	c
@@ -1292,7 +1305,7 @@ _sch_next:
 	inc	r1
 	sjmp	00104$
 00106$:
-;	sch8051.c:205: POP_BANK
+;	sch8051.c:206: POP_BANK
 	pop psw 
 	pop 0 
 	pop 1 
@@ -1307,10 +1320,10 @@ _sch_next:
 	pop b 
 	pop acc 
 	pop bits 
-;	sch8051.c:206: EA = 1; 
+;	sch8051.c:207: EA = 1; 
 ;	assignBit
 	setb	_EA
-;	sch8051.c:207: }
+;	sch8051.c:208: }
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'sch_mutex_start'
@@ -1319,30 +1332,30 @@ _sch_next:
 ;mut                       Allocated to registers r5 r6 r7 
 ;i                         Allocated to registers r4 
 ;------------------------------------------------------------
-;	sch8051.c:214: void sch_mutex_start(struct sch_mutex_sync *mut, Byte state){
+;	sch8051.c:215: void sch_mutex_start(struct sch_mutex_sync *mut, Byte state){
 ;	-----------------------------------------
 ;	 function sch_mutex_start
 ;	-----------------------------------------
 _sch_mutex_start:
-;	sch8051.c:217: mut->lock = MUTEX_LOCKED; 
+;	sch8051.c:218: mut->lock = MUTEX_LOCKED; 
 	mov	r5,dpl
 	mov	r6,dph
 	mov	r7,b
 	clr	a
 	lcall	__gptrput
-;	sch8051.c:218: if(state == MUTEX_LOCKED || state == MUTEX_RELEASED){
+;	sch8051.c:219: if(state == MUTEX_LOCKED || state == MUTEX_RELEASED){
 	mov	a,_sch_mutex_start_PARM_2
 	jz	00101$
 	mov	a,#0x01
 	cjne	a,_sch_mutex_start_PARM_2,00110$
 00101$:
-;	sch8051.c:219: mut->lock = state; 
+;	sch8051.c:220: mut->lock = state; 
 	mov	dpl,r5
 	mov	dph,r6
 	mov	b,r7
 	mov	a,_sch_mutex_start_PARM_2
 	lcall	__gptrput
-;	sch8051.c:221: for(i = 0; i < SCH_MAX_TASKS; i++){
+;	sch8051.c:222: for(i = 0; i < SCH_MAX_TASKS; i++){
 00110$:
 	inc	r5
 	cjne	r5,#0x00,00121$
@@ -1350,7 +1363,7 @@ _sch_mutex_start:
 00121$:
 	mov	r4,#0x00
 00105$:
-;	sch8051.c:222: mut->waiting_list[i] = 0; 
+;	sch8051.c:223: mut->waiting_list[i] = 0; 
 	mov	a,r4
 	add	a,r5
 	mov	r1,a
@@ -1363,208 +1376,60 @@ _sch_mutex_start:
 	mov	b,r3
 	clr	a
 	lcall	__gptrput
-;	sch8051.c:221: for(i = 0; i < SCH_MAX_TASKS; i++){
+;	sch8051.c:222: for(i = 0; i < SCH_MAX_TASKS; i++){
 	inc	r4
 	cjne	r4,#0x0a,00122$
 00122$:
 	jc	00105$
-;	sch8051.c:224: }
+;	sch8051.c:225: }
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'sch_mutex_lock'
 ;------------------------------------------------------------
-;mut                       Allocated to registers r5 r6 r7 
+;mut                       Allocated with name '_sch_mutex_lock_mut_65536_40'
 ;------------------------------------------------------------
-;	sch8051.c:226: Byte sch_mutex_lock(struct sch_mutex_sync *mut) __critical{
+;	sch8051.c:228: void sch_mutex_lock(struct sch_mutex_sync *mut){
 ;	-----------------------------------------
 ;	 function sch_mutex_lock
 ;	-----------------------------------------
 _sch_mutex_lock:
-	setb	c
-	jbc	ea,00110$
-	clr	c
-00110$:
-	push	psw
-;	sch8051.c:227: if(mut->lock == MUTEX_RELEASED){
-	mov	r5,dpl
-	mov	r6,dph
-	mov	r7,b
-	lcall	__gptrget
-	mov	r4,a
-	cjne	r4,#0x01,00102$
-;	sch8051.c:228: mut->lock = MUTEX_LOCKED; 
-	mov	dpl,r5
-	mov	dph,r6
-	mov	b,r7
+	mov	_sch_mutex_lock_mut_65536_40,dpl
+	mov	(_sch_mutex_lock_mut_65536_40 + 1),dph
+	mov	(_sch_mutex_lock_mut_65536_40 + 2),b
+;	sch8051.c:229: EA = 0; 
+;	assignBit
+	clr	_EA
+;	sch8051.c:230: while(1){
+	mov	a,#0x01
+	add	a,_sch_mutex_lock_mut_65536_40
+	mov	r2,a
 	clr	a
-	lcall	__gptrput
-;	sch8051.c:229: return 1; 
-	mov	dpl,#0x01
-	sjmp	00104$
-00102$:
-;	sch8051.c:231: sch_tasks[sch_index].state = BLOCKED;
-	mov	dptr,#_sch_index
-	movx	a,@dptr
-	mov	b,#0x34
-	mul	ab
-	add	a,#_sch_tasks
+	addc	a,(_sch_mutex_lock_mut_65536_40 + 1)
 	mov	r3,a
-	mov	a,#(_sch_tasks >> 8)
-	addc	a,b
-	mov	r4,a
-	mov	a,#0x33
-	add	a,r3
-	mov	dpl,a
+	mov	r4,(_sch_mutex_lock_mut_65536_40 + 2)
+00105$:
+;	sch8051.c:231: if(mut->lock == MUTEX_RELEASED){
+	mov	dpl,_sch_mutex_lock_mut_65536_40
+	mov	dph,(_sch_mutex_lock_mut_65536_40 + 1)
+	mov	b,(_sch_mutex_lock_mut_65536_40 + 2)
+	lcall	__gptrget
+	mov	r1,a
+	cjne	r1,#0x01,00102$
+;	sch8051.c:232: mut->lock = MUTEX_LOCKED; 
+	mov	dpl,_sch_mutex_lock_mut_65536_40
+	mov	dph,(_sch_mutex_lock_mut_65536_40 + 1)
+	mov	b,(_sch_mutex_lock_mut_65536_40 + 2)
 	clr	a
-	addc	a,r4
-	mov	dph,a
-	mov	a,#0x02
-	movx	@dptr,a
-;	sch8051.c:232: mut->waiting_list[sch_index] = 1; 
-	inc	r5
-	cjne	r5,#0x00,00113$
-	inc	r6
-00113$:
+	lcall	__gptrput
+;	sch8051.c:233: EA = 1; 
+;	assignBit
+	setb	_EA
+;	sch8051.c:234: break;
+	ret
+00102$:
+;	sch8051.c:236: sch_tasks[sch_index].state = BLOCKED;
 	mov	dptr,#_sch_index
 	movx	a,@dptr
-	add	a,r5
-	mov	r5,a
-	clr	a
-	addc	a,r6
-	mov	r6,a
-	mov	dpl,r5
-	mov	dph,r6
-	mov	b,r7
-	mov	a,#0x01
-	lcall	__gptrput
-;	sch8051.c:233: sch_next(); 
-	lcall	_sch_next
-;	sch8051.c:234: return 0; 
-	mov	dpl,#0x00
-00104$:
-;	sch8051.c:236: }
-	pop	psw
-	mov	ea,c
-	ret
-;------------------------------------------------------------
-;Allocation info for local variables in function 'sch_mutex_trylock'
-;------------------------------------------------------------
-;mut                       Allocated to registers r5 r6 r7 
-;------------------------------------------------------------
-;	sch8051.c:238: Byte sch_mutex_trylock(struct sch_mutex_sync *mut) __critical{
-;	-----------------------------------------
-;	 function sch_mutex_trylock
-;	-----------------------------------------
-_sch_mutex_trylock:
-	setb	c
-	jbc	ea,00110$
-	clr	c
-00110$:
-	push	psw
-;	sch8051.c:239: if(mut->lock == MUTEX_RELEASED){
-	mov	r5,dpl
-	mov	r6,dph
-	mov	r7,b
-	lcall	__gptrget
-	mov	r4,a
-	cjne	r4,#0x01,00102$
-;	sch8051.c:240: mut->lock = MUTEX_LOCKED; 
-	mov	dpl,r5
-	mov	dph,r6
-	mov	b,r7
-	clr	a
-	lcall	__gptrput
-;	sch8051.c:241: return 1; 
-	mov	dpl,#0x01
-	sjmp	00104$
-00102$:
-;	sch8051.c:243: return 0; 
-	mov	dpl,#0x00
-00104$:
-;	sch8051.c:245: }
-	pop	psw
-	mov	ea,c
-	ret
-;------------------------------------------------------------
-;Allocation info for local variables in function 'sch_mutex_release'
-;------------------------------------------------------------
-;mut                       Allocated to registers r5 r6 r7 
-;i                         Allocated with name '_sch_mutex_release_i_65536_49'
-;sloc0                     Allocated with name '_sch_mutex_release_sloc0_1_0'
-;------------------------------------------------------------
-;	sch8051.c:247: Byte sch_mutex_release(struct sch_mutex_sync *mut) __critical{
-;	-----------------------------------------
-;	 function sch_mutex_release
-;	-----------------------------------------
-_sch_mutex_release:
-	setb	c
-	jbc	ea,00129$
-	clr	c
-00129$:
-	push	psw
-;	sch8051.c:249: if(mut->lock == MUTEX_RELEASED){
-	mov	r5,dpl
-	mov	r6,dph
-	mov	r7,b
-	lcall	__gptrget
-	mov	r4,a
-	cjne	r4,#0x01,00105$
-;	sch8051.c:250: return 0; 
-	mov	dpl,#0x00
-	ljmp	00110$
-00105$:
-;	sch8051.c:252: mut->lock = MUTEX_RELEASED; 
-	mov	dpl,r5
-	mov	dph,r6
-	mov	b,r7
-	mov	a,#0x01
-	lcall	__gptrput
-;	sch8051.c:253: for(i = 0; i < sch_num_tasks; i++){
-	inc	r5
-	cjne	r5,#0x00,00132$
-	inc	r6
-00132$:
-	mov	_sch_mutex_release_sloc0_1_0,r5
-	mov	(_sch_mutex_release_sloc0_1_0 + 1),r6
-	mov	(_sch_mutex_release_sloc0_1_0 + 2),r7
-	mov	_sch_mutex_release_i_65536_49,#0x00
-00108$:
-	mov	dptr,#_sch_num_tasks
-	movx	a,@dptr
-	mov	r0,a
-	clr	c
-	mov	a,_sch_mutex_release_i_65536_49
-	subb	a,r0
-	jnc	00103$
-;	sch8051.c:254: if(mut->waiting_list[i] == 1){
-	push	ar5
-	push	ar6
-	push	ar7
-	mov	a,_sch_mutex_release_i_65536_49
-	add	a,_sch_mutex_release_sloc0_1_0
-	mov	r0,a
-	clr	a
-	addc	a,(_sch_mutex_release_sloc0_1_0 + 1)
-	mov	r1,a
-	mov	r7,(_sch_mutex_release_sloc0_1_0 + 2)
-	mov	dpl,r0
-	mov	dph,r1
-	mov	b,r7
-	lcall	__gptrget
-	mov	r0,a
-	cjne	r0,#0x01,00134$
-	sjmp	00135$
-00134$:
-	pop	ar7
-	pop	ar6
-	pop	ar5
-	sjmp	00109$
-00135$:
-	pop	ar7
-	pop	ar6
-	pop	ar5
-;	sch8051.c:255: sch_tasks[i].state = WAIT;
-	mov	a,_sch_mutex_release_i_65536_49
 	mov	b,#0x34
 	mul	ab
 	add	a,#_sch_tasks
@@ -1578,32 +1443,204 @@ _sch_mutex_release:
 	clr	a
 	addc	a,r1
 	mov	dph,a
-	mov	a,#0x01
+	mov	a,#0x02
 	movx	@dptr,a
-;	sch8051.c:256: mut->waiting_list[i] = 0;  
-	mov	a,_sch_mutex_release_i_65536_49
-	add	a,r5
+;	sch8051.c:237: mut->waiting_list[sch_index] = 1; 
+	mov	dptr,#_sch_index
+	movx	a,@dptr
+	add	a,r2
 	mov	r0,a
 	clr	a
-	addc	a,r6
+	addc	a,r3
 	mov	r1,a
-	mov	ar4,r7
+	mov	ar7,r4
 	mov	dpl,r0
 	mov	dph,r1
+	mov	b,r7
+	mov	a,#0x01
+	lcall	__gptrput
+;	sch8051.c:238: sch_next();  
+	push	ar4
+	push	ar3
+	push	ar2
+	lcall	_sch_next
+	pop	ar2
+	pop	ar3
+	pop	ar4
+;	sch8051.c:239: EA = 0; 
+;	assignBit
+	clr	_EA
+;	sch8051.c:242: }
+	sjmp	00105$
+;------------------------------------------------------------
+;Allocation info for local variables in function 'sch_mutex_trylock'
+;------------------------------------------------------------
+;mut                       Allocated to registers r5 r6 r7 
+;------------------------------------------------------------
+;	sch8051.c:244: Byte sch_mutex_trylock(struct sch_mutex_sync *mut) __critical __reentrant{
+;	-----------------------------------------
+;	 function sch_mutex_trylock
+;	-----------------------------------------
+_sch_mutex_trylock:
+	setb	c
+	jbc	ea,00110$
+	clr	c
+00110$:
+	push	psw
+;	sch8051.c:245: if(mut->lock == MUTEX_RELEASED){
+	mov	r5,dpl
+	mov	r6,dph
+	mov	r7,b
+	lcall	__gptrget
+	mov	r4,a
+	cjne	r4,#0x01,00102$
+;	sch8051.c:246: mut->lock = MUTEX_LOCKED; 
+	mov	dpl,r5
+	mov	dph,r6
+	mov	b,r7
+	clr	a
+	lcall	__gptrput
+;	sch8051.c:247: return 1; 
+	mov	dpl,#0x01
+	sjmp	00104$
+00102$:
+;	sch8051.c:249: return 0; 
+	mov	dpl,#0x00
+00104$:
+;	sch8051.c:251: }
+	pop	psw
+	mov	ea,c
+	ret
+;------------------------------------------------------------
+;Allocation info for local variables in function 'sch_mutex_release'
+;------------------------------------------------------------
+;mut                       Allocated to registers r5 r6 r7 
+;i                         Allocated to registers r1 
+;------------------------------------------------------------
+;	sch8051.c:253: Byte sch_mutex_release(struct sch_mutex_sync *mut)__reentrant{
+;	-----------------------------------------
+;	 function sch_mutex_release
+;	-----------------------------------------
+_sch_mutex_release:
+	mov	r5,dpl
+	mov	r6,dph
+	mov	r7,b
+;	sch8051.c:254: EA = 0; 
+;	assignBit
+	clr	_EA
+;	sch8051.c:256: if(mut->lock == MUTEX_RELEASED){
+	mov	dpl,r5
+	mov	dph,r6
+	mov	b,r7
+	lcall	__gptrget
+	mov	r4,a
+	cjne	r4,#0x01,00105$
+;	sch8051.c:257: EA = 1; 
+;	assignBit
+	setb	_EA
+;	sch8051.c:258: return 0; 
+	mov	dpl,#0x00
+	ret
+00105$:
+;	sch8051.c:260: mut->lock = MUTEX_RELEASED; 
+	mov	dpl,r5
+	mov	dph,r6
+	mov	b,r7
+	mov	a,#0x01
+	lcall	__gptrput
+;	sch8051.c:261: for(i = 0; i < sch_num_tasks; i++){
+	inc	r5
+	cjne	r5,#0x00,00131$
+	inc	r6
+00131$:
+	mov	ar2,r5
+	mov	ar3,r6
+	mov	ar4,r7
+	mov	r1,#0x00
+00108$:
+	mov	dptr,#_sch_num_tasks
+	movx	a,@dptr
+	mov	r0,a
+	clr	c
+	mov	a,r1
+	subb	a,r0
+	jnc	00103$
+;	sch8051.c:262: if(mut->waiting_list[i] == 1){
+	push	ar5
+	push	ar6
+	push	ar7
+	mov	a,r1
+	add	a,r2
+	mov	r0,a
+	clr	a
+	addc	a,r3
+	mov	r6,a
+	mov	ar7,r4
+	mov	dpl,r0
+	mov	dph,r6
+	mov	b,r7
+	lcall	__gptrget
+	mov	r0,a
+	cjne	r0,#0x01,00133$
+	sjmp	00134$
+00133$:
+	pop	ar7
+	pop	ar6
+	pop	ar5
+	sjmp	00109$
+00134$:
+	pop	ar7
+	pop	ar6
+	pop	ar5
+;	sch8051.c:263: sch_tasks[i].state = WAIT;
+	push	ar2
+	push	ar3
+	push	ar4
+	mov	a,r1
+	mov	b,#0x34
+	mul	ab
+	add	a,#_sch_tasks
+	mov	r0,a
+	mov	a,#(_sch_tasks >> 8)
+	addc	a,b
+	mov	r4,a
+	mov	a,#0x33
+	add	a,r0
+	mov	dpl,a
+	clr	a
+	addc	a,r4
+	mov	dph,a
+	mov	a,#0x01
+	movx	@dptr,a
+;	sch8051.c:264: mut->waiting_list[i] = 0;  
+	mov	a,r1
+	add	a,r5
+	mov	r2,a
+	clr	a
+	addc	a,r6
+	mov	r3,a
+	mov	ar4,r7
+	mov	dpl,r2
+	mov	dph,r3
 	mov	b,r4
 	clr	a
 	lcall	__gptrput
+;	sch8051.c:268: return 1; 
+	pop	ar4
+	pop	ar3
+	pop	ar2
+;	sch8051.c:264: mut->waiting_list[i] = 0;  
 00109$:
-;	sch8051.c:253: for(i = 0; i < sch_num_tasks; i++){
-	inc	_sch_mutex_release_i_65536_49
+;	sch8051.c:261: for(i = 0; i < sch_num_tasks; i++){
+	inc	r1
 	sjmp	00108$
 00103$:
-;	sch8051.c:259: return 1; 
+;	sch8051.c:267: EA = 1; 
+;	assignBit
+	setb	_EA
+;	sch8051.c:268: return 1; 
 	mov	dpl,#0x01
-00110$:
-;	sch8051.c:261: }
-	pop	psw
-	mov	ea,c
+;	sch8051.c:270: }
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'sch_semaphore_start'
@@ -1612,18 +1649,18 @@ _sch_mutex_release:
 ;sem                       Allocated to registers r5 r6 r7 
 ;i                         Allocated to registers r4 
 ;------------------------------------------------------------
-;	sch8051.c:263: void sch_semaphore_start(struct sch_semaphore_sync *sem, Byte size){
+;	sch8051.c:272: void sch_semaphore_start(struct sch_semaphore_sync *sem, Byte size){
 ;	-----------------------------------------
 ;	 function sch_semaphore_start
 ;	-----------------------------------------
 _sch_semaphore_start:
-;	sch8051.c:264: sem->lock = size; 
+;	sch8051.c:273: sem->lock = size; 
 	mov	r5,dpl
 	mov	r6,dph
 	mov	r7,b
 	mov	a,_sch_semaphore_start_PARM_2
 	lcall	__gptrput
-;	sch8051.c:265: sem->share = size; 
+;	sch8051.c:274: sem->share = size; 
 	mov	a,#0x0b
 	add	a,r5
 	mov	r2,a
@@ -1636,14 +1673,14 @@ _sch_semaphore_start:
 	mov	b,r4
 	mov	a,_sch_semaphore_start_PARM_2
 	lcall	__gptrput
-;	sch8051.c:267: for(i = 0; i < SCH_MAX_TASKS; i++){
+;	sch8051.c:276: for(i = 0; i < SCH_MAX_TASKS; i++){
 	inc	r5
 	cjne	r5,#0x00,00111$
 	inc	r6
 00111$:
 	mov	r4,#0x00
 00102$:
-;	sch8051.c:268: sem->waiting_list[i] = 0; 
+;	sch8051.c:277: sem->waiting_list[i] = 0; 
 	mov	a,r4
 	add	a,r5
 	mov	r1,a
@@ -1656,63 +1693,23 @@ _sch_semaphore_start:
 	mov	b,r3
 	clr	a
 	lcall	__gptrput
-;	sch8051.c:267: for(i = 0; i < SCH_MAX_TASKS; i++){
+;	sch8051.c:276: for(i = 0; i < SCH_MAX_TASKS; i++){
 	inc	r4
 	cjne	r4,#0x0a,00112$
 00112$:
 	jc	00102$
-;	sch8051.c:270: }
+;	sch8051.c:279: }
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'sch_semaphore_tryget'
 ;------------------------------------------------------------
 ;sem                       Allocated to registers r5 r6 r7 
 ;------------------------------------------------------------
-;	sch8051.c:272: Byte sch_semaphore_tryget(struct sch_semaphore_sync *sem) __critical{
+;	sch8051.c:281: Byte sch_semaphore_tryget(struct sch_semaphore_sync *sem) __critical __reentrant{
 ;	-----------------------------------------
 ;	 function sch_semaphore_tryget
 ;	-----------------------------------------
 _sch_semaphore_tryget:
-	setb	c
-	jbc	ea,00110$
-	clr	c
-00110$:
-	push	psw
-;	sch8051.c:273: if(sem->lock > 0){
-	mov	r5,dpl
-	mov	r6,dph
-	mov	r7,b
-	lcall	__gptrget
-	mov	r4,a
-	jz	00102$
-;	sch8051.c:274: sem->lock--; 
-	dec	r4
-	mov	dpl,r5
-	mov	dph,r6
-	mov	b,r7
-	mov	a,r4
-	lcall	__gptrput
-;	sch8051.c:275: return 1; 
-	mov	dpl,#0x01
-	sjmp	00104$
-00102$:
-;	sch8051.c:277: return 0; 
-	mov	dpl,#0x00
-00104$:
-;	sch8051.c:279: }
-	pop	psw
-	mov	ea,c
-	ret
-;------------------------------------------------------------
-;Allocation info for local variables in function 'sch_semaphore_get'
-;------------------------------------------------------------
-;sem                       Allocated to registers r5 r6 r7 
-;------------------------------------------------------------
-;	sch8051.c:281: Byte sch_semaphore_get(struct sch_semaphore_sync *sem) __critical{
-;	-----------------------------------------
-;	 function sch_semaphore_get
-;	-----------------------------------------
-_sch_semaphore_get:
 	setb	c
 	jbc	ea,00110$
 	clr	c
@@ -1736,57 +1733,110 @@ _sch_semaphore_get:
 	mov	dpl,#0x01
 	sjmp	00104$
 00102$:
-;	sch8051.c:286: sch_tasks[sch_index].state = BLOCKED; 
+;	sch8051.c:286: return 0; 
+	mov	dpl,#0x00
+00104$:
+;	sch8051.c:288: }
+	pop	psw
+	mov	ea,c
+	ret
+;------------------------------------------------------------
+;Allocation info for local variables in function 'sch_semaphore_get'
+;------------------------------------------------------------
+;sem                       Allocated with name '_sch_semaphore_get_sem_65536_66'
+;------------------------------------------------------------
+;	sch8051.c:291: void sch_semaphore_get(struct sch_semaphore_sync *sem){
+;	-----------------------------------------
+;	 function sch_semaphore_get
+;	-----------------------------------------
+_sch_semaphore_get:
+	mov	_sch_semaphore_get_sem_65536_66,dpl
+	mov	(_sch_semaphore_get_sem_65536_66 + 1),dph
+	mov	(_sch_semaphore_get_sem_65536_66 + 2),b
+;	sch8051.c:292: EA = 0; 
+;	assignBit
+	clr	_EA
+;	sch8051.c:293: while(1){
+	mov	a,#0x01
+	add	a,_sch_semaphore_get_sem_65536_66
+	mov	r2,a
+	clr	a
+	addc	a,(_sch_semaphore_get_sem_65536_66 + 1)
+	mov	r3,a
+	mov	r4,(_sch_semaphore_get_sem_65536_66 + 2)
+00105$:
+;	sch8051.c:294: if(sem->lock > 0){
+	mov	dpl,_sch_semaphore_get_sem_65536_66
+	mov	dph,(_sch_semaphore_get_sem_65536_66 + 1)
+	mov	b,(_sch_semaphore_get_sem_65536_66 + 2)
+	lcall	__gptrget
+	mov	r1,a
+	jz	00102$
+;	sch8051.c:295: sem->lock--; 
+	dec	r1
+	mov	dpl,_sch_semaphore_get_sem_65536_66
+	mov	dph,(_sch_semaphore_get_sem_65536_66 + 1)
+	mov	b,(_sch_semaphore_get_sem_65536_66 + 2)
+	mov	a,r1
+	lcall	__gptrput
+;	sch8051.c:296: EA = 1; 
+;	assignBit
+	setb	_EA
+;	sch8051.c:297: break; 
+	ret
+00102$:
+;	sch8051.c:299: sch_tasks[sch_index].state = BLOCKED; 
 	mov	dptr,#_sch_index
 	movx	a,@dptr
 	mov	b,#0x34
 	mul	ab
 	add	a,#_sch_tasks
-	mov	r3,a
+	mov	r0,a
 	mov	a,#(_sch_tasks >> 8)
 	addc	a,b
-	mov	r4,a
+	mov	r1,a
 	mov	a,#0x33
-	add	a,r3
+	add	a,r0
 	mov	dpl,a
 	clr	a
-	addc	a,r4
+	addc	a,r1
 	mov	dph,a
 	mov	a,#0x02
 	movx	@dptr,a
-;	sch8051.c:287: sem->waiting_list[sch_index] = 1; 
-	inc	r5
-	cjne	r5,#0x00,00112$
-	inc	r6
-00112$:
+;	sch8051.c:300: sem->waiting_list[sch_index] = 1; 
 	mov	dptr,#_sch_index
 	movx	a,@dptr
-	add	a,r5
-	mov	r5,a
+	add	a,r2
+	mov	r0,a
 	clr	a
-	addc	a,r6
-	mov	r6,a
-	mov	dpl,r5
-	mov	dph,r6
+	addc	a,r3
+	mov	r1,a
+	mov	ar7,r4
+	mov	dpl,r0
+	mov	dph,r1
 	mov	b,r7
 	mov	a,#0x01
 	lcall	__gptrput
-;	sch8051.c:288: sch_next(); 
+;	sch8051.c:301: sch_next();  
+	push	ar4
+	push	ar3
+	push	ar2
 	lcall	_sch_next
-;	sch8051.c:289: return 0; 
-	mov	dpl,#0x00
-00104$:
-;	sch8051.c:291: }
-	pop	psw
-	mov	ea,c
-	ret
+	pop	ar2
+	pop	ar3
+	pop	ar4
+;	sch8051.c:302: EA = 0; 
+;	assignBit
+	clr	_EA
+;	sch8051.c:305: }
+	sjmp	00105$
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'sch_semaphore_put'
 ;------------------------------------------------------------
 ;sem                       Allocated to registers r5 r6 r7 
-;i                         Allocated with name '_sch_semaphore_put_i_65536_69'
+;i                         Allocated to registers r1 
 ;------------------------------------------------------------
-;	sch8051.c:293: Byte sch_semaphore_put(struct sch_semaphore_sync *sem) __critical{
+;	sch8051.c:307: Byte sch_semaphore_put(struct sch_semaphore_sync *sem) __critical __reentrant{
 ;	-----------------------------------------
 ;	 function sch_semaphore_put
 ;	-----------------------------------------
@@ -1796,7 +1846,7 @@ _sch_semaphore_put:
 	clr	c
 00129$:
 	push	psw
-;	sch8051.c:295: if(sem->lock < sem->share){
+;	sch8051.c:309: if(sem->lock < sem->share){
 	mov	r5,dpl
 	mov	r6,dph
 	mov	r7,b
@@ -1820,14 +1870,14 @@ _sch_semaphore_put:
 	jc	00130$
 	ljmp	00105$
 00130$:
-;	sch8051.c:296: sem->lock++;
+;	sch8051.c:310: sem->lock++;
 	inc	r4
 	mov	dpl,r5
 	mov	dph,r6
 	mov	b,r7
 	mov	a,r4
 	lcall	__gptrput
-;	sch8051.c:297: for(i = 0; i < sch_num_tasks; i++){
+;	sch8051.c:311: for(i = 0; i < sch_num_tasks; i++){
 	inc	r5
 	cjne	r5,#0x00,00131$
 	inc	r6
@@ -1835,28 +1885,28 @@ _sch_semaphore_put:
 	mov	ar2,r5
 	mov	ar3,r6
 	mov	ar4,r7
-	mov	_sch_semaphore_put_i_65536_69,#0x00
+	mov	r1,#0x00
 00108$:
 	mov	dptr,#_sch_num_tasks
 	movx	a,@dptr
 	mov	r0,a
 	clr	c
-	mov	a,_sch_semaphore_put_i_65536_69
+	mov	a,r1
 	subb	a,r0
 	jnc	00103$
-;	sch8051.c:298: if(sem->waiting_list[i] == 1){
+;	sch8051.c:312: if(sem->waiting_list[i] == 1){
 	push	ar5
 	push	ar6
 	push	ar7
-	mov	a,_sch_semaphore_put_i_65536_69
+	mov	a,r1
 	add	a,r2
 	mov	r0,a
 	clr	a
 	addc	a,r3
-	mov	r1,a
+	mov	r6,a
 	mov	ar7,r4
 	mov	dpl,r0
-	mov	dph,r1
+	mov	dph,r6
 	mov	b,r7
 	lcall	__gptrget
 	mov	r0,a
@@ -1871,24 +1921,24 @@ _sch_semaphore_put:
 	pop	ar7
 	pop	ar6
 	pop	ar5
-;	sch8051.c:299: sem->waiting_list[i] = 0; 
+;	sch8051.c:313: sem->waiting_list[i] = 0; 
 	push	ar2
 	push	ar3
 	push	ar4
-	mov	a,_sch_semaphore_put_i_65536_69
+	mov	a,r1
 	add	a,r5
 	mov	r0,a
 	clr	a
 	addc	a,r6
-	mov	r1,a
+	mov	r3,a
 	mov	ar4,r7
 	mov	dpl,r0
-	mov	dph,r1
+	mov	dph,r3
 	mov	b,r4
 	clr	a
 	lcall	__gptrput
-;	sch8051.c:300: sch_tasks[i].state = WAIT; 	
-	mov	a,_sch_semaphore_put_i_65536_69
+;	sch8051.c:314: sch_tasks[i].state = WAIT; 	
+	mov	a,r1
 	mov	b,#0x34
 	mul	ab
 	add	a,#_sch_tasks
@@ -1904,24 +1954,24 @@ _sch_semaphore_put:
 	mov	dph,a
 	mov	a,#0x01
 	movx	@dptr,a
-;	sch8051.c:305: return 0; 
+;	sch8051.c:319: return 0; 
 	pop	ar4
 	pop	ar3
 	pop	ar2
-;	sch8051.c:300: sch_tasks[i].state = WAIT; 	
+;	sch8051.c:314: sch_tasks[i].state = WAIT; 	
 00109$:
-;	sch8051.c:297: for(i = 0; i < sch_num_tasks; i++){
-	inc	_sch_semaphore_put_i_65536_69
+;	sch8051.c:311: for(i = 0; i < sch_num_tasks; i++){
+	inc	r1
 	sjmp	00108$
 00103$:
-;	sch8051.c:303: return 1; 
+;	sch8051.c:317: return 1; 
 	mov	dpl,#0x01
 	sjmp	00110$
 00105$:
-;	sch8051.c:305: return 0; 
+;	sch8051.c:319: return 0; 
 	mov	dpl,#0x00
 00110$:
-;	sch8051.c:307: }
+;	sch8051.c:321: }
 	pop	psw
 	mov	ea,c
 	ret

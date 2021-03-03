@@ -189,7 +189,8 @@ void sch_start(){
 	TR2 = 1;  
 
 	// scheduling the first task:  
-	sch_schedule();
+	sch_index = 0; 
+	sch_tasks[sch_index].state = READY; 
 	TO_STACK
 	POP_BANK  
 	EA = 1;
@@ -223,30 +224,37 @@ void sch_mutex_start(struct sch_mutex_sync *mut, Byte state){
 	}
 }
 
-Byte sch_mutex_lock(struct sch_mutex_sync *mut) __critical{
+#pragma nooverlay
+void sch_mutex_lock(struct sch_mutex_sync *mut){
+	EA = 0; 
+	while(1){
+		if(mut->lock == MUTEX_RELEASED){
+			mut->lock = MUTEX_LOCKED; 
+			EA = 1; 
+			break;
+		}else{
+			sch_tasks[sch_index].state = BLOCKED;
+			mut->waiting_list[sch_index] = 1; 
+			sch_next();  
+			EA = 0; 
+		}
+	}
+}
+
+Byte sch_mutex_trylock(struct sch_mutex_sync *mut) __critical __reentrant{
 	if(mut->lock == MUTEX_RELEASED){
 		mut->lock = MUTEX_LOCKED; 
 		return 1; 
 	}else{
-		sch_tasks[sch_index].state = BLOCKED;
-		mut->waiting_list[sch_index] = 1; 
-		sch_next(); 
 		return 0; 
 	}
 }
 
-Byte sch_mutex_trylock(struct sch_mutex_sync *mut) __critical{
-	if(mut->lock == MUTEX_RELEASED){
-		mut->lock = MUTEX_LOCKED; 
-		return 1; 
-	}else{
-		return 0; 
-	}
-}
-
-Byte sch_mutex_release(struct sch_mutex_sync *mut) __critical{
+Byte sch_mutex_release(struct sch_mutex_sync *mut)__reentrant{
+	EA = 0; 
 	Byte i; 
 	if(mut->lock == MUTEX_RELEASED){
+		EA = 1; 
 		return 0; 
 	}else{
 		mut->lock = MUTEX_RELEASED; 
@@ -256,6 +264,7 @@ Byte sch_mutex_release(struct sch_mutex_sync *mut) __critical{
 				mut->waiting_list[i] = 0;  
 			}
 		}
+		EA = 1; 
 		return 1; 
 	}
 }
@@ -269,7 +278,7 @@ void sch_semaphore_start(struct sch_semaphore_sync *sem, Byte size){
 	}
 }
 
-Byte sch_semaphore_tryget(struct sch_semaphore_sync *sem) __critical{
+Byte sch_semaphore_tryget(struct sch_semaphore_sync *sem) __critical __reentrant{
 	if(sem->lock > 0){
 		sem->lock--; 
 		return 1; 
@@ -278,19 +287,24 @@ Byte sch_semaphore_tryget(struct sch_semaphore_sync *sem) __critical{
 	}
 }
 
-Byte sch_semaphore_get(struct sch_semaphore_sync *sem) __critical{
-	if(sem->lock > 0){
-		sem->lock--; 
-		return 1; 
-	}else{
-		sch_tasks[sch_index].state = BLOCKED; 
-		sem->waiting_list[sch_index] = 1; 
-		sch_next(); 
-		return 0; 
+#pragma nooverlay
+void sch_semaphore_get(struct sch_semaphore_sync *sem){
+	EA = 0; 
+	while(1){
+		if(sem->lock > 0){
+			sem->lock--; 
+			EA = 1; 
+			break; 
+		}else{
+			sch_tasks[sch_index].state = BLOCKED; 
+			sem->waiting_list[sch_index] = 1; 
+			sch_next();  
+			EA = 0; 
+		}
 	}
 }
 
-Byte sch_semaphore_put(struct sch_semaphore_sync *sem) __critical{
+Byte sch_semaphore_put(struct sch_semaphore_sync *sem) __critical __reentrant{
 	Byte i; 
 	if(sem->lock < sem->share){
 		sem->lock++;

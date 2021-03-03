@@ -16,7 +16,7 @@
 
 #define SCH_MAX_TASKS 	10
 #define SCH_STACK_SIZE 	50
-#define SCH_STACK_INIT 	0x70    // CONFIGURE YOUR COMPILER TO START STACK HERE,
+#define SCH_STACK_INIT 	0x45    // CONFIGURE YOUR COMPILER TO START STACK HERE,
                                 // OR CHANGE THIS MACRO ACCORDING TO YOUR .MEM FILE
 #define SCH_TIMEOUT 	15
 #define SCH_MAX_PRIO 	3
@@ -91,12 +91,12 @@ void sch_add_task(fptr*);
 void sch_start();
 void sch_next(); 
 void sch_mutex_start(struct sch_mutex_sync*, Byte); 
-Byte sch_mutex_lock(struct sch_mutex_sync*) __critical;
-Byte sch_mutex_trylock(struct sch_mutex_sync*) __critical;
-Byte sch_mutex_release(struct sch_mutex_sync*) __critical;
+void sch_mutex_lock(struct sch_mutex_sync*);
+Byte sch_mutex_trylock(struct sch_mutex_sync*) __critical __reentrant;
+Byte sch_mutex_release(struct sch_mutex_sync*) __reentrant;
 void sch_semaphore_start(struct sch_semaphore_sync*, Byte);
-Byte sch_semaphore_tryget(struct sch_semaphore_sync*) __critical;
-Byte sch_semaphore_get(struct sch_semaphore_sync*) __critical;
-Byte sch_semaphore_put(struct sch_semaphore_sync*) __critical;
+Byte sch_semaphore_tryget(struct sch_semaphore_sync*) __critical __reentrant;
+void sch_semaphore_get(struct sch_semaphore_sync*);
+Byte sch_semaphore_put(struct sch_semaphore_sync*) __critical __reentrant;
 
 #endif

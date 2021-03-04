@@ -24,77 +24,29 @@ __xdata __at(0x211) Byte sch_num_tasks;
 -------------------------------------------------------------------------------
 */
 
-// MACROS USED DURING THE CONTEXT SWITCH PROCESS: 
-//****************************************************************************
-#define TO_XRAM { \
-	__data Byte * __data ram = (Byte __data *)SCH_STACK_INIT; \
-	__xdata Byte *__data xram = &(sch_tasks[sch_index].stack_save[0]);	\
-	sch_tasks[sch_index].sp = SP - SCH_STACK_INIT; \
-	while((Byte)ram <= SP) *(xram++) = *(ram++); }
-		
-#define TO_STACK { \
-	__data Byte * __data ram = (Byte __data *)SCH_STACK_INIT; \
-	__xdata Byte *__data xram = &(sch_tasks[sch_index].stack_save[0]);	\
-	SP = SCH_STACK_INIT + sch_tasks[sch_index].sp; \
-	while((Byte)ram <= SP) *(ram++) = *(xram++); }
-
-#define POP_BANK		\
-		__asm 			\
-			pop	psw		\
-			pop	0		\
-			pop	1		\
-			pop	2		\
-			pop	3		\
-			pop	4		\
-			pop	5		\
-			pop	6		\
-			pop	7		\
-			pop	dph		\
-			pop	dpl		\
-			pop	b		\
-			pop	acc		\
-			pop bits	\
-		__endasm;
-
-#define PUSH_BANK		\
-		__asm			\
-			push bits	\
-			push acc	\
-			push b		\
-			push dpl	\
-			push dph	\
-			push 7		\
-			push 6		\
-			push 5		\
-			push 4		\
-			push 3		\
-			push 2		\
-			push 1		\
-			push 0		\
-			push psw	\
-		__endasm;
-//****************************************************************************
-
-// ROUND ROBIN SCHEDULER, A PRIORITY BASED SCHEDULER IS ON THE WORKS! :D 
-#pragma save
+// ROUND ROBIN SCHEDULER: 
 #pragma nooverlay
 void sch_schedule(){
 	Byte i; 
-	
-	i = (sch_index + 1)%sch_num_tasks; 
 
-	while(i != sch_index){
-		if(sch_tasks[i].state == WAIT){
-			break; 
+	if(sch_num_tasks == 0){
+		PCON = 0x02; 
+		PCON = 0x32; 
+	}else{ 
+		i = (sch_index + 1)%SCH_MAX_TASKS; 
+
+		while(i != sch_index){
+			if(sch_tasks[i].state == WAIT){
+				break; 
+			}
+			i = (i + 1)%SCH_MAX_TASKS; 
 		}
-		i = (i + 1)%sch_num_tasks; 
-	}
 
-	sch_tasks[sch_index].state = WAIT; 
-	sch_tasks[i].state = READY; 
-	sch_index = i; 
+		sch_tasks[sch_index].state = WAIT; 
+		sch_tasks[i].state = READY; 
+		sch_index = i; 
+	}
 }
-#pragma restore
 
 /*
 -> TIMER 2 INTERRUPT USED FOR SCHEDULING, YOU MAY WANT TO USE THIS INTERRUPT 
@@ -175,6 +127,18 @@ void sch_add_task(fptr *f){
 	sch_num_tasks++; 
 }
 
+// FUNCTION TO LET THE SYSTEM KNOW A TASK IS OVER: 
+#pragma nooverlay
+void sch_remove_task(){
+	EA = 0; 
+	sch_num_tasks--; 
+	sch_tasks[sch_index].state = FREE; 
+	sch_schedule(); 
+	TO_STACK
+	POP_BANK
+	EA = 1; 
+}
+
 // FUNCTION TO START THE SCHEDULER: 
 void sch_start(){
 	EA = 0; 
@@ -187,7 +151,7 @@ void sch_start(){
 	TL2 = 0xD9;
 	ET2 = 1; 
 	TR2 = 1;  
-
+	
 	// scheduling the first task:  
 	sch_index = 0; 
 	sch_tasks[sch_index].state = READY; 
@@ -241,7 +205,8 @@ void sch_mutex_lock(struct sch_mutex_sync *mut){
 	}
 }
 
-Byte sch_mutex_trylock(struct sch_mutex_sync *mut) __critical __reentrant{
+#pragma nooverlay
+Byte sch_mutex_trylock(struct sch_mutex_sync *mut) __critical{
 	if(mut->lock == MUTEX_RELEASED){
 		mut->lock = MUTEX_LOCKED; 
 		return 1; 
@@ -250,7 +215,8 @@ Byte sch_mutex_trylock(struct sch_mutex_sync *mut) __critical __reentrant{
 	}
 }
 
-Byte sch_mutex_release(struct sch_mutex_sync *mut)__reentrant{
+#pragma nooverlay
+Byte sch_mutex_release(struct sch_mutex_sync *mut){
 	EA = 0; 
 	Byte i; 
 	if(mut->lock == MUTEX_RELEASED){
@@ -278,7 +244,8 @@ void sch_semaphore_start(struct sch_semaphore_sync *sem, Byte size){
 	}
 }
 
-Byte sch_semaphore_tryget(struct sch_semaphore_sync *sem) __critical __reentrant{
+#pragma nooverlay
+Byte sch_semaphore_tryget(struct sch_semaphore_sync *sem) __critical{
 	if(sem->lock > 0){
 		sem->lock--; 
 		return 1; 
@@ -299,12 +266,13 @@ void sch_semaphore_get(struct sch_semaphore_sync *sem){
 			sch_tasks[sch_index].state = BLOCKED; 
 			sem->waiting_list[sch_index] = 1; 
 			sch_next();  
-			EA = 0; 
+			EA = 0;
 		}
 	}
 }
 
-Byte sch_semaphore_put(struct sch_semaphore_sync *sem) __critical __reentrant{
+#pragma nooverlay
+Byte sch_semaphore_put(struct sch_semaphore_sync *sem) __critical{
 	Byte i; 
 	if(sem->lock < sem->share){
 		sem->lock++;

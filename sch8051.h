@@ -16,7 +16,7 @@
 
 #define SCH_MAX_TASKS 	10
 #define SCH_STACK_SIZE 	50
-#define SCH_STACK_INIT 	0x45    // CONFIGURE YOUR COMPILER TO START STACK HERE,
+#define SCH_STACK_INIT 	0x21    // CONFIGURE YOUR COMPILER TO START STACK HERE,
                                 // OR CHANGE THIS MACRO ACCORDING TO YOUR .MEM FILE
 #define SCH_TIMEOUT 	15
 #define SCH_MAX_PRIO 	3
@@ -28,6 +28,58 @@
 
 #define MUTEX_LOCKED	0
 #define MUTEX_RELEASED	1
+
+// MACROS USED DURING THE CONTEXT SWITCH PROCESS: 
+//****************************************************************************
+#define TO_XRAM { \
+	__data Byte * __data ram = (Byte __data *)SCH_STACK_INIT; \
+	__xdata Byte *__data xram = &(sch_tasks[sch_index].stack_save[0]);	\
+	sch_tasks[sch_index].sp = SP - SCH_STACK_INIT; \
+	while((Byte)ram <= SP) *(xram++) = *(ram++); }
+		
+#define TO_STACK { \
+	__data Byte * __data ram = (Byte __data *)SCH_STACK_INIT; \
+	__xdata Byte *__data xram = &(sch_tasks[sch_index].stack_save[0]);	\
+	SP = SCH_STACK_INIT + sch_tasks[sch_index].sp; \
+	while((Byte)ram <= SP) *(ram++) = *(xram++); }
+
+#define POP_BANK		\
+		__asm 			\
+			pop	psw		\
+			pop	0		\
+			pop	1		\
+			pop	2		\
+			pop	3		\
+			pop	4		\
+			pop	5		\
+			pop	6		\
+			pop	7		\
+			pop	dph		\
+			pop	dpl		\
+			pop	b		\
+			pop	acc		\
+			pop bits	\
+		__endasm;
+
+#define PUSH_BANK		\
+		__asm			\
+			push bits	\
+			push acc	\
+			push b		\
+			push dpl	\
+			push dph	\
+			push 7		\
+			push 6		\
+			push 5		\
+			push 4		\
+			push 3		\
+			push 2		\
+			push 1		\
+			push 0		\
+			push psw	\
+		__endasm;
+//****************************************************************************
+
 
 /*-----------------------------------------------------------------------------
 								SYSTEM VARIABLES
@@ -88,15 +140,16 @@ void sch_schedule();
 void sch_dispatch() __interrupt(5); 
 void sch_init(); 
 void sch_add_task(fptr*); 
+void sch_remove_task(); 
 void sch_start();
 void sch_next(); 
 void sch_mutex_start(struct sch_mutex_sync*, Byte); 
 void sch_mutex_lock(struct sch_mutex_sync*);
-Byte sch_mutex_trylock(struct sch_mutex_sync*) __critical __reentrant;
-Byte sch_mutex_release(struct sch_mutex_sync*) __reentrant;
+Byte sch_mutex_trylock(struct sch_mutex_sync*) __critical;
+Byte sch_mutex_release(struct sch_mutex_sync*);
 void sch_semaphore_start(struct sch_semaphore_sync*, Byte);
-Byte sch_semaphore_tryget(struct sch_semaphore_sync*) __critical __reentrant;
+Byte sch_semaphore_tryget(struct sch_semaphore_sync*) __critical;
 void sch_semaphore_get(struct sch_semaphore_sync*);
-Byte sch_semaphore_put(struct sch_semaphore_sync*) __critical __reentrant;
+Byte sch_semaphore_put(struct sch_semaphore_sync*) __critical;
 
 #endif
